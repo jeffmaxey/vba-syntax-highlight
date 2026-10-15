@@ -12,7 +12,10 @@ Public Sub SyntaxFormHandler()
     ' Reverse alphabetical order here = alphabetical order in form display
     LANGUAGES_ = Array( _
         Array("Xml", "HighlightXml"), _
+        Array("VB", "HighlightVB"), _
+        Array("SQL", "HighlightSQL"), _
         Array("Shell", "HighlightShell"), _
+        Array("R", "HighlightR"), _
         Array("Python", "HighlightPython"), _
         Array("Json", "HighlightJson"), _
         Array("Java", "HighlightJava"), _
@@ -33,6 +36,5 @@ Public Sub SyntaxFormHandler()
         .Show
     End With
 End Sub
-
 
 

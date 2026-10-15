@@ -169,14 +169,17 @@ Private Sub HighlightKeywords(arrKeywords As Variant, styles As clsFormat)
     Dim posStart As Long
     Dim posEnd As Long
     Dim posMax As Long
+    Dim compareMethod As VbCompareMethod
     
     Set rng = r_range
     posMax = Len(rng.text)
+    compareMethod = vbBinaryCompare
+    If s_language = "SQL" Or s_language = "VB" Then compareMethod = vbTextCompare
 
     ' Loop through keywords arrays
     For Each keyword In arrKeywords
 
-        posStart = InStr(1, rng.text, keyword)
+        posStart = InStr(1, rng.text, keyword, compareMethod)
         
         ' Find all instances of the keyword in the range
         Do While posStart > 0 And posStart < posMax
@@ -187,7 +190,7 @@ Private Sub HighlightKeywords(arrKeywords As Variant, styles As clsFormat)
 
              End If
              
-             posStart = InStr(posEnd + 1, rng.text, keyword)
+             posStart = InStr(posEnd + 1, rng.text, keyword, compareMethod)
         Loop
     Next keyword
         
@@ -387,7 +390,7 @@ Public Sub HighlightStringsAndComments()
         element = NextCommentOrString(posStart)
         posStart = element.pos
         posEnd = InStr(posStart + 1, rng, element.char) + Len(element.char) - 1
-        While IsEscaped(rng, posEnd)
+        While IsEscaped(rng, posEnd) Or IsDoubledQuote(rng, posStart, posEnd, element)
             posEnd = InStr(posEnd + 1, rng, element.char) + Len(element.char) - 1
         Wend
         
@@ -405,16 +408,33 @@ Public Sub HighlightStringsAndComments()
 
 End Sub
 
+Private Function IsDoubledQuote(rng As Range, posStart As Long, posEnd As Long, element As NextElement) As Boolean
+    If element.mode <> "string" Or posEnd < posStart Or posEnd >= Len(rng.text) Then Exit Function
+
+    If s_language = "VB" And element.char = Chr(34) Then
+        IsDoubledQuote = Mid(rng.text, posEnd + 1, 1) = element.char
+    ElseIf s_language = "SQL" And (element.char = Chr(34) Or element.char = Chr(39)) Then
+        IsDoubledQuote = Mid(rng.text, posEnd + 1, 1) = element.char
+    End If
+End Function
+
 Private Function NextCommentOrString(posStart As Long) As NextElement
     Dim result As NextElement
     Dim mode As String
     Dim posComment As Long
+    Dim posRem As Long
     Dim posMultilineComment As Long
     Dim posStringMultiline As Long
     Dim posString1 As Long
     Dim posString2 As Long
     
     If Len(s_commentLine) > 0 Then posComment = InStr(posStart, r_range.text, s_commentLine)
+    If s_language = "VB" Then
+        posRem = InStr(posStart, r_range.text, "Rem", vbTextCompare)
+        Do While posRem > 0 And Not IsWord(r_range, posRem, posRem + 3, Len(r_range.text))
+            posRem = InStr(posRem + 3, r_range.text, "Rem", vbTextCompare)
+        Loop
+    End If
     If Len(s_commentMultilineStart) > 0 Then posMultilineComment = InStr(posStart, r_range.text, s_commentMultilineStart)
     If Len(s_stringMultilineStart) > 0 Then posStringMultiline = InStr(posStart, r_range.text, s_stringMultilineStart)
     posString1 = InStr(posStart, r_range.text, Chr(34)) ' double quotes (")
@@ -424,6 +444,11 @@ Private Function NextCommentOrString(posStart As Long) As NextElement
     posStart = Len(r_range)
     If posComment > 0 And posComment < posStart And Not IsEscaped(r_range, posComment) Then
         posStart = posComment
+        charEnd = Chr(13)
+        mode = "comment"
+    End If
+    If posRem > 0 And posRem < posStart Then
+        posStart = posRem
         charEnd = Chr(13)
         mode = "comment"
     End If

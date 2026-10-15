@@ -18,7 +18,7 @@ Alternatively, you can zip all contents of the build folder and change the exten
 
 # Usage
 
-Select the text you want to highlight and apply the corresponding highlight feature. The template uploaded to this repository contain custom ribbons. If you wish to update your ribbons, follow the "Custom Ribbons" instructions
+Select the text you want to highlight and apply the corresponding highlight feature. The custom syntax selector includes VB, R, and SQL alongside the existing languages. The template uploaded to this repository contain custom ribbons. If you wish to update your ribbons, follow the "Custom Ribbons" instructions
 
 # Custom Ribbons
 
